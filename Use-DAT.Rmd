@@ -7,6 +7,9 @@ Data from https://www.spc.noaa.gov/wcm/
 
 ```{r}
 df <- read.csv("2014-2015-onetor-dat.csv")
+
+ii <- which(is.na(df$path_data) & is.na(df$point_data))
+df$path_data[ii] <- 1
 ```
 
 ```{r}
@@ -23,5 +26,19 @@ df2 <- df %>%
 df3 <- df %>%
   group_by(unique_torID) %>%
   summarize(nTargets = n() - 1)
-x <- rep(df1$om)
+
+df2$om <- rep(df1$om, times = df3$nTargets)
+
+df2 <- df2 %>%
+  filter(!is.na(lat))
+```
+
+Create simple feature.
+```{r}
+library(sf)
+projcrs <- 4326
+sfdf <- st_as_sf(x = df2,                         
+                 coords = c("lon", "lat"),
+                  crs = projcrs)
+
 ```
