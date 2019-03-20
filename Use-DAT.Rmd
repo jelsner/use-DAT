@@ -1,0 +1,27 @@
+---
+title: "Use-DAT"
+output: html_document
+---
+
+Data from https://www.spc.noaa.gov/wcm/
+
+```{r}
+df <- read.csv("2014-2015-onetor-dat.csv")
+```
+
+```{r}
+library(dplyr)
+
+df1 <- df %>%
+  filter(path_data == 1) %>%
+  select(om:mt)
+
+df2 <- df %>%
+  filter(point_data == 1) %>%
+  select(OBJECTID:edit_time.1)
+
+df3 <- df %>%
+  group_by(unique_torID) %>%
+  summarize(nTargets = n() - 1)
+x <- rep(df1$om)
+```
