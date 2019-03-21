@@ -19,29 +19,26 @@ library(dplyr)
 
 df1 <- df %>%
   filter(path_data == 1) %>%
-  select(om:mt)
+  select(unique_torID, om:mt)
 
 df2 <- df %>%
   filter(point_data == 1) %>%
-  select(OBJECTID:edit_time.1)
+  select(unique_torID, OBJECTID:edit_time.1)
 
-df3 <- df %>%
-  group_by(unique_torID) %>%
-  summarize(nTargets = n() - 1)
-
-df2$om <- rep(df1$om, times = df3$nTargets)
-
-df2 <- df2 %>%
-  filter(!is.na(lat))
+dfFinal <- left_join(df2, df1, 
+                     by = "unique_torID")
 ```
 
-Create simple feature.
+Create a simple feature data frame and set and then transform the CRS.
 ```{r}
+dfFinal <- dfFinal %>%
+  filter(!is.na(lat))
+
 library(sf)
 projcrs <- 4326
-sfdf <- st_as_sf(x = df2,                         
+sfdf <- st_as_sf(x = dfFinal,                         
                  coords = c("lon", "lat"),
-                  crs = projcrs) %>%
+                 crs = projcrs) %>%
   st_transform(crs = 102008)
 ```
 
@@ -52,6 +49,17 @@ sfdf2 <- sfdf %>%
   mutate(EF = as.integer(efscale.1))
 
 table(sfdf2$EF)
+
+sfdf2 <- sfdf %>%
+  filter(unique_torID == 72) %>%
+  mutate(EF = as.integer(efscale.1))
+```
+
+Convert to buffered line string.
+```{r}
+MP <- st_combine(sfdf2)
+LS <- st_sfc(st_linestring(st_coordinates(MP)), crs = 102008)
+BLS <- st_buffer(LS, dist = 500)
 ```
 
 ```{r}
@@ -60,25 +68,25 @@ library(USAboundaries)
 
 ctys <- us_counties() 
 
-tm_shape(sfdf2) +
-  tm_bubbles(size = "EF", col = "EF") +
+tm_shape(BLS) +
+  tm_polygons() +
+tm_shape(LS) +
+  tm_lines() +
 tm_shape(ctys) +
   tm_borders()
+
 ```
 
 Perhaps do this for each EF rating?
 ```{r}
 path <- st_convex_hull(st_combine(sfdf2))
 
-path2 <- st_buffer(st_triangulate(st_combine(sfdf2)), dist = 50)
-
-
 tm_shape(path2) +
   tm_polygons(alpha = .3) +
 tm_shape(path) +
   tm_polygons(alpha = .3) +
 tm_shape(sfdf2) +
-  tm_bubbles(size = "EF", col = "EF") +
+  tm_bubbles(size = 1) +
 tm_shape(ctys) +
   tm_borders()
 ```
