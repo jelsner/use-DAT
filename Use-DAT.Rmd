@@ -51,8 +51,10 @@ sfdf2 <- sfdf %>%
 table(sfdf2$EF)
 
 sfdf2 <- sfdf %>%
-  filter(unique_torID == 72) %>%
-  mutate(EF = as.integer(efscale.1))
+  filter(unique_torID == 72)
+
+sfdf2a <- sfdf2 %>%
+  filter(efscale.1 == "EF4")
 ```
 
 Convert to buffered line string.
@@ -60,6 +62,10 @@ Convert to buffered line string.
 MP <- st_combine(sfdf2)
 LS <- st_sfc(st_linestring(st_coordinates(MP)), crs = 102008)
 BLS <- st_buffer(LS, dist = 500)
+
+MPa <- st_combine(sfdf2a)
+LSa <- st_sfc(st_linestring(st_coordinates(MPa)), crs = 102008)
+BLSa <- st_buffer(LSa, dist = 200)
 ```
 
 ```{r}
@@ -73,7 +79,9 @@ tm_shape(BLS) +
 tm_shape(LS) +
   tm_lines() +
 tm_shape(ctys) +
-  tm_borders()
+  tm_borders() +
+tm_shape(BLSa) +
+  tm_polygons(col = "red")
 
 ```
 
