@@ -41,7 +41,8 @@ library(sf)
 projcrs <- 4326
 sfdf <- st_as_sf(x = df2,                         
                  coords = c("lon", "lat"),
-                  crs = projcrs)
+                  crs = projcrs) %>%
+  st_transform(crs = 102008)
 ```
 
 ```{r}
@@ -69,12 +70,13 @@ Perhaps do this for each EF rating?
 ```{r}
 path <- st_convex_hull(st_combine(sfdf2))
 
-path2 <- st_buffer(st_triangulate(st_combine(sfdf2)), dist = .001)
+path2 <- st_buffer(st_triangulate(st_combine(sfdf2)), dist = 50)
 
 
-
+tm_shape(path2) +
+  tm_polygons(alpha = .3) +
 tm_shape(path) +
-  tm_polygons() +
+  tm_polygons(alpha = .3) +
 tm_shape(sfdf2) +
   tm_bubbles(size = "EF", col = "EF") +
 tm_shape(ctys) +
